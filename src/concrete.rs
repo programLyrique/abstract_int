@@ -2,7 +2,7 @@
 #[derive(Default, PartialEq, Eq, Clone, Copy)]
 pub struct Var(usize);
 #[derive(Default, PartialEq, Eq, Clone, Copy)]
-pub struct Const(i64);
+pub struct Const(pub i64);
 #[derive(Default, PartialEq, Eq, Clone, Copy)]
 pub struct Label(usize);
 
