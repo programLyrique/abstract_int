@@ -1,6 +1,6 @@
 // Concrete semantics
 #[derive(Default, PartialEq, Eq, Clone, Copy)]
-pub struct Var(usize);
+pub struct Var(pub usize);
 #[derive(Default, PartialEq, Eq, Clone, Copy)]
 pub struct Const(pub i64);
 #[derive(Default, PartialEq, Eq, Clone, Copy)]

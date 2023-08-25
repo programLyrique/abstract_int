@@ -4,7 +4,7 @@ use AbstractValue::*;
 
 // Non-relational abstraction
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 enum AbstractValue {
     Bottom,
     Top,
@@ -12,8 +12,10 @@ enum AbstractValue {
     Neg,
 }
 
-pub fn includes(a1: AbstractValue, a2: AbstractValue) -> bool {
-    a1 == AbstractValue::Bottom || a2 == AbstractValue::Top || a1 == a2
+impl AbstractValue {
+    pub fn includes(&self, a2: AbstractValue) -> bool {
+        *self == AbstractValue::Bottom || a2 == AbstractValue::Top || *self == a2
+    }
 }
 
 pub fn constant(n: Const) -> AbstractValue {
@@ -72,7 +74,7 @@ pub fn binop(op: BinOp, a1: AbstractValue, a2: AbstractValue) -> AbstractValue {
 }
 
 struct AbstractDomain {
-    domain: Vec<AbstractValue>,
+    domain: Vec<AbstractValue>, // each index is a variable
 }
 
 impl AbstractDomain {
@@ -80,8 +82,38 @@ impl AbstractDomain {
         self.domain[x.0]
     }
 
-    pub fn write(self, x: Var, a: AbstractValue) -> Self {
-        self.domain[x] = a;
+    pub fn write(mut self, x: Var, a: AbstractValue) -> Self {
+        self.domain[x.0] = a;
         self
+    }
+
+    pub fn join(self, d: &AbstractDomain) -> Self {
+        AbstractDomain {
+            domain: self
+                .domain
+                .into_iter()
+                .enumerate()
+                .map(|(i, a1)| join(a1, d.read(Var(i))))
+                .collect(),
+        }
+    }
+
+    pub fn is_bottom(&self) -> bool {
+        self.domain.iter().any(|a| *a == Bottom)
+    }
+
+    pub fn bottomize(mut self) -> Self {
+        AbstractDomain {
+            domain: self.domain.into_iter().map(|_| Bottom).collect(),
+        }
+    }
+
+    pub fn is_le(&self, a: &AbstractDomain) -> bool {
+        for (i, v) in self.domain.iter().enumerate() {
+            if !v.includes(a.read(Var(i))) {
+                break;
+            }
+        }
+        true
     }
 }
