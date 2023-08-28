@@ -5,7 +5,7 @@ use AbstractValue::*;
 // Non-relational abstraction
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
-enum AbstractValue {
+pub enum AbstractValue {
     Bottom,
     Top,
     Pos,
@@ -73,7 +73,8 @@ pub fn binop(op: BinOp, a1: AbstractValue, a2: AbstractValue) -> AbstractValue {
     }
 }
 
-struct AbstractDomain {
+#[derive(Debug, PartialEq, Clone)]
+pub struct AbstractDomain {
     domain: Vec<AbstractValue>, // each index is a variable
 }
 
@@ -87,13 +88,13 @@ impl AbstractDomain {
         self
     }
 
-    pub fn join(self, d: &AbstractDomain) -> Self {
+    pub fn join(&self, d: &AbstractDomain) -> Self {
         AbstractDomain {
             domain: self
                 .domain
-                .into_iter()
+                .iter()
                 .enumerate()
-                .map(|(i, a1)| join(a1, d.read(Var(i))))
+                .map(|(i, a1)| join(*a1, d.read(Var(i))))
                 .collect(),
         }
     }

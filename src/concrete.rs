@@ -1,10 +1,28 @@
 // Concrete semantics
-#[derive(Default, PartialEq, Eq, Clone, Copy)]
+#[derive(Default, Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Var(pub usize);
-#[derive(Default, PartialEq, Eq, Clone, Copy)]
+
+impl Var {
+    pub fn new() -> Self {
+        static mut n: usize = 0;
+        unsafe {
+            let var = Var(n);
+            n += 1;
+            var
+        }
+    }
+}
+#[derive(Default, Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Const(pub i64);
-#[derive(Default, PartialEq, Eq, Clone, Copy)]
+
+#[derive(Default, Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Label(usize);
+
+impl Label {
+    pub fn new() -> Self {
+        Label(0)
+    }
+}
 
 #[derive(Default, PartialEq, Eq, Clone, Copy)]
 pub enum BinOp {
@@ -29,7 +47,7 @@ pub fn relop(c: Rel, left: Const, right: Const) -> bool {
 }
 
 #[derive(PartialEq, Eq, Clone)]
-enum Expr {
+pub enum Expr {
     Const(Const),
     Var(Var),
     BinOp {
@@ -37,6 +55,12 @@ enum Expr {
         left: Box<Expr>,
         right: Box<Expr>,
     },
+}
+
+impl Expr {
+    pub fn new_const(n: i64) -> Self {
+        Expr::Const(Const(n))
+    }
 }
 
 impl Default for Expr {
@@ -54,16 +78,29 @@ pub fn binop(op: BinOp, left: Const, right: Const) -> Const {
 }
 
 #[derive(Default, PartialEq, Eq, Clone)]
-struct Cond {
-    rel: Rel,
-    left: Var,
-    right: Const,
+pub struct Cond {
+    pub rel: Rel,
+    pub left: Var,
+    pub right: Const,
+}
+
+impl Cond {
+    pub fn negate(self: &Cond) -> Cond {
+        Cond {
+            rel: match self.rel {
+                Rel::InfEq => Rel::Sup,
+                Rel::Sup => Rel::InfEq,
+            },
+            left: self.left,
+            right: self.right,
+        }
+    }
 }
 
 // TODO: we need to add the labels, but it is not as easy as in Ocaml where one
 // can define mutually recursive types.
 #[derive(Default, PartialEq, Eq, Clone)]
-enum Command {
+pub enum Command {
     #[default]
     Skip,
     Seq(Box<(Label, Command)>, Box<(Label, Command)>),
@@ -80,12 +117,56 @@ enum Command {
     },
 }
 
-#[derive(Default, PartialEq, Eq, Clone)]
-struct Memory {
+// Helper functions that computer labels
+// (well, dummy now, currently)
+impl Command {
+    pub fn make_seq(c1: Command, c2: Command) -> Command {
+        Self::Seq(Box::new((Label::new(), c1)), Box::new((Label::new(), c2)))
+    }
+
+    pub fn make_if(cond: Cond, c1: Command, c2: Option<Command>) -> Command {
+        Self::If {
+            cond: cond,
+            then: Box::new((Label::new(), c1)),
+            els: c2.map(|c| Box::new((Label::new(), c))),
+        }
+    }
+
+    pub fn make_while(cond: Cond, c: Command) -> Command {
+        Self::While {
+            cond: cond,
+            body: Box::new((Label::new(), c)),
+        }
+    }
+    pub fn assign_const(var: Var, n: i64) -> Command {
+        Self::Assign(var, Expr::new_const(n))
+    }
+}
+
+#[macro_export]
+macro_rules! seq {
+    // The pattern for a seq with 2 elements
+    ($e1:expr, $e2:expr) => {
+            Command::make_seq($e1, $e2)
+    };
+
+    // Decompose multiple `eval`s recursively
+    ($e1:expr, $($es:expr),+) => {{
+        Command::make_seq($e1, seq! { $($es),+ })
+    }};
+}
+
+#[derive(Default, Debug, PartialEq, Eq, Clone)]
+pub struct Memory {
     mem: Vec<Const>,
 }
 
 impl Memory {
+    pub fn new() -> Self {
+        Memory {
+            mem: vec![Const(0); 100],
+        }
+    }
     pub fn read(&self, x: Var) -> Const {
         self.mem[x.0]
     }
@@ -113,7 +194,7 @@ impl Memory {
     pub fn sem_com(self, state: &(Label, Command)) -> Self {
         match state.1 {
             Command::Skip => self,
-            Command::Seq(ref c1, ref c2) => self.sem_com(&c2).sem_com(&c1),
+            Command::Seq(ref c1, ref c2) => self.sem_com(&c1).sem_com(&c2),
             Command::Assign(x, ref expr) => {
                 let res = self.sem_expr(&expr);
                 self.write(x, res)
