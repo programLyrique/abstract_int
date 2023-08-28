@@ -4,9 +4,10 @@ use AbstractValue::*;
 
 // Non-relational abstraction
 
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Default, PartialEq, Eq, Copy, Clone)]
 pub enum AbstractValue {
     Bottom,
+    #[default]
     Top,
     Pos,
     Neg,
@@ -79,6 +80,12 @@ pub struct AbstractDomain {
 }
 
 impl AbstractDomain {
+    pub fn new() -> Self {
+        AbstractDomain {
+            domain: vec![AbstractValue::default(); 100],
+        }
+    }
+
     pub fn read(&self, x: Var) -> AbstractValue {
         self.domain[x.0]
     }

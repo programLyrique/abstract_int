@@ -23,10 +23,17 @@ fn main() {
             }
         )
     );
+    let p3 = p2.clone();
 
     let mem = Memory::new();
 
     let mem = mem.sem_com(&(Label::new(), p2));
 
-    println!("Result is {:?}", mem.read(Var(0)))
+    println!("Result is {:?}", mem.read(Var(0)));
+
+    // And now let's interpret it abstractly!
+
+    let domain = AbstractDomain::new();
+    let domain = command(&(Label::new(), p3), domain);
+    println!("Abstract result is {:?}", domain.read(Var(0)));
 }

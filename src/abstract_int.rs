@@ -42,7 +42,7 @@ pub fn command(state: &(Label, Command), domain: AbstractDomain) -> AbstractDoma
     } else {
         match state.1 {
             Skip => domain,
-            Seq(ref c1, ref c2) => command(c1, command(c2, domain)),
+            Seq(ref c1, ref c2) => command(c2, command(c1, domain)),
             Assign(var, ref e) => {
                 let a = expr(e, &domain);
                 domain.write(var, a)

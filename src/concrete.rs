@@ -24,7 +24,7 @@ impl Label {
     }
 }
 
-#[derive(Default, PartialEq, Eq, Clone, Copy)]
+#[derive(Default, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum BinOp {
     #[default]
     Add,
@@ -32,7 +32,7 @@ pub enum BinOp {
     Mul,
 }
 
-#[derive(Default, PartialEq, Eq, Clone, Copy)]
+#[derive(Default, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Rel {
     #[default]
     InfEq,
@@ -46,7 +46,7 @@ pub fn relop(c: Rel, left: Const, right: Const) -> bool {
     }
 }
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Debug, Eq, Clone)]
 pub enum Expr {
     Const(Const),
     Var(Var),
@@ -77,7 +77,7 @@ pub fn binop(op: BinOp, left: Const, right: Const) -> Const {
     })
 }
 
-#[derive(Default, PartialEq, Eq, Clone)]
+#[derive(Default, Debug, PartialEq, Eq, Clone)]
 pub struct Cond {
     pub rel: Rel,
     pub left: Var,
@@ -99,7 +99,7 @@ impl Cond {
 
 // TODO: we need to add the labels, but it is not as easy as in Ocaml where one
 // can define mutually recursive types.
-#[derive(Default, PartialEq, Eq, Clone)]
+#[derive(Default, Debug, PartialEq, Eq, Clone)]
 pub enum Command {
     #[default]
     Skip,
