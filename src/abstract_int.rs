@@ -112,4 +112,129 @@ mod tests {
         let domain = command(&(Label::new(), program), domain);
         assert_eq!(domain.read(x), AbstractValue::Pos);
     }
+
+    #[test]
+    fn test_if_pos() {
+        let x = Var::new();
+
+        let program = seq!(
+            Command::assign_const(x, 5),
+            Command::make_if(
+                Cond {
+                    rel: Rel::InfEq,
+                    left: x,
+                    right: Const(-1)
+                },
+                Assign(
+                    x,
+                    Expr::BinOp {
+                        op: BinOp::Add,
+                        left: Box::new(Expr::Var(x)),
+                        right: Box::new(Expr::new_const(3))
+                    }
+                ),
+                Some(Assign(
+                    x,
+                    Expr::BinOp {
+                        op: BinOp::Add,
+                        left: Box::new(Expr::Var(x)),
+                        right: Box::new(Expr::new_const(20))
+                    }
+                ))
+            ),
+            Assign(
+                x,
+                Expr::BinOp {
+                    op: BinOp::Add,
+                    left: Box::new(Expr::Var(x)),
+                    right: Box::new(Expr::new_const(3))
+                }
+            )
+        );
+
+        let domain = AbstractDomain::new();
+        let domain = command(&(Label::new(), program), domain);
+        assert_eq!(domain.read(x), AbstractValue::Pos);
+    }
+
+    #[test]
+    fn test_if_pos_then() {
+        let x = Var::new();
+
+        let program = seq!(
+            Command::assign_const(x, 5),
+            Command::make_if(
+                Cond {
+                    rel: Rel::Sup,
+                    left: x,
+                    right: Const(0)
+                },
+                Assign(
+                    x,
+                    Expr::BinOp {
+                        op: BinOp::Add,
+                        left: Box::new(Expr::Var(x)),
+                        right: Box::new(Expr::new_const(3))
+                    }
+                ),
+                None
+            ),
+            Assign(
+                x,
+                Expr::BinOp {
+                    op: BinOp::Add,
+                    left: Box::new(Expr::Var(x)),
+                    right: Box::new(Expr::new_const(3))
+                }
+            )
+        );
+
+        let domain = AbstractDomain::new();
+        let domain = command(&(Label::new(), program), domain);
+        assert_eq!(domain.read(x), AbstractValue::Pos);
+    }
+
+    #[test]
+    fn test_if_pos_sub() {
+        let x = Var::new();
+
+        let program = seq!(
+            Command::assign_const(x, 5),
+            Command::make_if(
+                Cond {
+                    rel: Rel::Sup, // >
+                    left: x,
+                    right: Const(-1) // 0 is positive in that domain
+                },
+                Assign(
+                    x,
+                    Expr::BinOp {
+                        op: BinOp::Add,
+                        left: Box::new(Expr::Var(x)),
+                        right: Box::new(Expr::new_const(3))
+                    }
+                ),
+                Some(Assign(
+                    x,
+                    Expr::BinOp {
+                        op: BinOp::Sub,
+                        left: Box::new(Expr::Var(x)),
+                        right: Box::new(Expr::new_const(20))
+                    }
+                ))
+            ),
+            Assign(
+                x,
+                Expr::BinOp {
+                    op: BinOp::Add,
+                    left: Box::new(Expr::Var(x)),
+                    right: Box::new(Expr::new_const(3))
+                }
+            )
+        );
+
+        let domain = AbstractDomain::new();
+        let domain = command(&(Label::new(), program), domain);
+        assert_eq!(domain.read(x), AbstractValue::Pos);
+    }
 }
