@@ -10,8 +10,6 @@ pub mod domain;
 fn main() {
     let x = Var::new();
 
-    let program = Command::make_seq(Assign(x, Expr::new_const(3)), Assign(x, Expr::new_const(4)));
-
     let p2 = seq!(
         Command::assign_const(x, 5),
         Assign(
@@ -29,11 +27,11 @@ fn main() {
 
     let mem = mem.sem_com(&(Label::new(), p2));
 
-    println!("Result is {:?}", mem.read(Var(0)));
+    println!("Result is {:?}", mem.read(x));
 
     // And now let's interpret it abstractly!
 
     let domain = AbstractDomain::new();
     let domain = command(&(Label::new(), p3), domain);
-    println!("Abstract result is {:?}", domain.read(Var(0)));
+    println!("Abstract result is {:?}", domain.read(x));
 }

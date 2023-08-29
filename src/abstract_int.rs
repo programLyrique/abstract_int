@@ -74,3 +74,42 @@ pub fn command(state: &(Label, Command), domain: AbstractDomain) -> AbstractDoma
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::abstract_int::*;
+    use crate::seq;
+
+    #[test]
+    fn test_ai_assign() {
+        let x = Var::new();
+
+        let program =
+            Command::make_seq(Assign(x, Expr::new_const(3)), Assign(x, Expr::new_const(4)));
+
+        let domain = AbstractDomain::new();
+        let domain = command(&(Label::new(), program), domain);
+        assert_eq!(domain.read(x), AbstractValue::Pos);
+    }
+
+    #[test]
+    fn test_ai_binop() {
+        let x = Var::new();
+
+        let program = seq!(
+            Command::assign_const(x, 5),
+            Assign(
+                x,
+                Expr::BinOp {
+                    op: BinOp::Add,
+                    left: Box::new(Expr::Var(x)),
+                    right: Box::new(Expr::new_const(3))
+                }
+            )
+        );
+
+        let domain = AbstractDomain::new();
+        let domain = command(&(Label::new(), program), domain);
+        assert_eq!(domain.read(x), AbstractValue::Pos);
+    }
+}

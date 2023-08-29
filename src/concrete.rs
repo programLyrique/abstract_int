@@ -239,3 +239,46 @@ pub struct State {
 
 // transitional semantics
 // TODO
+
+#[cfg(test)]
+mod tests {
+    use crate::concrete::Command::*;
+    use crate::concrete::*;
+
+    #[test]
+    fn test_assign() {
+        let x = Var::new();
+
+        let program =
+            Command::make_seq(Assign(x, Expr::new_const(3)), Assign(x, Expr::new_const(4)));
+
+        let mem = Memory::new();
+
+        let mem = mem.sem_com(&(Label::new(), program));
+
+        assert_eq!(mem.read(x), Const(4));
+    }
+
+    #[test]
+    fn test_binop() {
+        let x = Var::new();
+
+        let program = seq!(
+            Command::assign_const(x, 5),
+            Assign(
+                x,
+                Expr::BinOp {
+                    op: BinOp::Add,
+                    left: Box::new(Expr::Var(x)),
+                    right: Box::new(Expr::new_const(3))
+                }
+            )
+        );
+
+        let mem = Memory::new();
+
+        let mem = mem.sem_com(&(Label::new(), program));
+
+        assert_eq!(mem.read(x), Const(8));
+    }
+}
