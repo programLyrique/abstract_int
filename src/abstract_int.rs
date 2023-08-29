@@ -237,4 +237,40 @@ mod tests {
         let domain = command(&(Label::new(), program), domain);
         assert_eq!(domain.read(x), AbstractValue::Pos);
     }
+
+    #[test]
+    fn test_loop() {
+        let x = Var::new();
+
+        let program = seq!(
+            Command::assign_const(x, 5),
+            Command::make_while(
+                Cond {
+                    rel: Rel::InfEq,
+                    left: x,
+                    right: Const(100)
+                },
+                Assign(
+                    x,
+                    Expr::BinOp {
+                        op: BinOp::Add,
+                        left: Box::new(Expr::Var(x)),
+                        right: Box::new(Expr::new_const(3))
+                    }
+                )
+            ),
+            Assign(
+                x,
+                Expr::BinOp {
+                    op: BinOp::Add,
+                    left: Box::new(Expr::Var(x)),
+                    right: Box::new(Expr::new_const(3))
+                }
+            )
+        );
+
+        let domain = AbstractDomain::new();
+        let domain = command(&(Label::new(), program), domain);
+        assert_eq!(domain.read(x), AbstractValue::Pos);
+    }
 }
